@@ -1,62 +1,88 @@
-# Text-Based Maze Adventure Game
+import pygame
+import sys
 
-maze = [
-    ["S", ".", ".", "#", "."],
-    ["#", "#", ".", "#", "."],
-    [".", ".", ".", ".", "."],
-    [".", "#", "#", "#", "."],
-    [".", ".", ".", "T", "#"]
+# Initialize pygame
+pygame.init()
+
+# Screen settings
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Top-Down Adventure")
+
+# Colors
+WHITE = (255, 255, 255)
+BLUE = (50, 100, 255)
+GREEN = (50, 200, 100)
+GRAY = (100, 100, 100)
+
+# Clock
+clock = pygame.time.Clock()
+
+# Player
+player = pygame.Rect(50, 50, 40, 40)
+player_speed = 5
+
+# Goal
+goal = pygame.Rect(700, 500, 50, 50)
+
+# Walls
+walls = [
+    pygame.Rect(200, 0, 40, 400),
+    pygame.Rect(400, 200, 40, 400),
+    pygame.Rect(600, 0, 40, 400),
 ]
 
-player_pos = [0, 0]
+def move_player(keys):
+    dx, dy = 0, 0
+    if keys[pygame.K_w] or keys[pygame.K_UP]:
+        dy -= player_speed
+    if keys[pygame.K_s] or keys[pygame.K_DOWN]:
+        dy += player_speed
+    if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+        dx -= player_speed
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+        dx += player_speed
 
-def print_maze():
-    for i in range(len(maze)):
-        for j in range(len(maze[i])):
-            if [i, j] == player_pos:
-                print("P", end=" ")
-            else:
-                print(maze[i][j], end=" ")
-        print()
+    player.x += dx
+    for wall in walls:
+        if player.colliderect(wall):
+            player.x -= dx
 
+    player.y += dy
+    for wall in walls:
+        if player.colliderect(wall):
+            player.y -= dy
 
-def move_player(direction):
-    x, y = player_pos
-    if direction == "w":
-        x -= 1
-    elif direction == "s":
-        x += 1
-    elif direction == "a":
-        y -= 1
-    elif direction == "d":
-        y += 1
-    else:
-        print("Invalid move!")
-        return False
+# Main game loop
+running = True
+win = False
 
-    if x < 0 or y < 0 or x >= 5 or y >= 5:
-        print("You hit the wall!")
-        return False
+while running:
+    clock.tick(60)
+    screen.fill(WHITE)
 
-    if maze[x][y] == "#":
-        print("Blocked path!")
-        return False
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
-    player_pos[0], player_pos[1] = x, y
-    return True
+    keys = pygame.key.get_pressed()
+    if not win:
+        move_player(keys)
 
+    # Draw elements
+    pygame.draw.rect(screen, BLUE, player)
+    pygame.draw.rect(screen, GREEN, goal)
+    for wall in walls:
+        pygame.draw.rect(screen, GRAY, wall)
 
-print("🏆 Welcome to Maze Adventure!")
-print("Reach the Treasure (T)")
-print("Controls: w = up, s = down, a = left, d = right\n")
+    # Win condition
+    if player.colliderect(goal):
+        win = True
+        font = pygame.font.SysFont(None, 64)
+        text = font.render("YOU WIN!", True, (0, 0, 0))
+        screen.blit(text, (WIDTH // 2 - 120, HEIGHT // 2))
 
-while True:
-    print_maze()
-    move = input("\nYour move: ").lower()
+    pygame.display.flip()
 
-    move_player(move)
-
-    x, y = player_pos
-    if maze[x][y] == "T":
-        print("\n🎉 Congratulations! You found the treasure!")
-        break
+pygame.quit()
+sys.exit()
